@@ -1,24 +1,22 @@
-import { type NextRequest, NextResponse } from "next/server"
+// app/api/brands/route.ts
+import { NextResponse } from "next/server"
+import pool from "@/lib/db"
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // TODO: Query database untuk mendapatkan semua brand
-    const mockBrands = [
-      {
-        id: "cmhq164i50003u8ug9nh861k2",
-        name: "Dior",
-        slug: "dior",
-        description: "Rumah mode mewah dari Prancis.",
-        imageUrl: null,
-      },
-    ]
+    const connection = await pool.getConnection()
+    const [rows] = await connection.execute("SELECT * FROM brands")
+    connection.release()
 
     return NextResponse.json({
       success: true,
-      data: mockBrands,
+      data: rows,
     })
   } catch (error) {
     console.error("Error fetching brands:", error)
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { success: false, error: "Database error" },
+      { status: 500 },
+    )
   }
 }

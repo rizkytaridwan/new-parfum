@@ -1,9 +1,10 @@
 import type React from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { PT_Serif } from "next/font/google";
-import { GeistSans } from "geist/font/sans"; // ✅ ganti ini
+import { GeistSans } from "geist/font/sans";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
+
 
 // PT Serif hanya 400 & 700
 const ptSerif = PT_Serif({ subsets: ["latin"], weight: ["400", "700"] });
@@ -31,6 +32,12 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "Parfum Premium", description: "Koleksi wangi terbaik" },
   viewport: { width: "device-width", initialScale: 1, maximumScale: 5 },
   generator: "v0.app",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

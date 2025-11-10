@@ -1,39 +1,87 @@
+// app/api/parfums/[slug]/route.ts
 import { type NextRequest, NextResponse } from "next/server"
+import pool from "@/lib/db"
 
-export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
+export async function GET(
+  request: NextRequest,
+  // Ganti destructuring { params } menjadi context
+  context: { params: { slug: string } },
+) {
+  let slug: string | undefined // Definisikan slug di sini agar bisa diakses di catch block
   try {
-    const slug = params.slug
+    // Await params seperti yang disarankan error log
+    const params = await (context.params as any)
+    slug = params.slug
 
-    // TODO: Query database untuk mendapatkan parfum berdasarkan slug
-    const mockParfum = {
-      id: "cmhq2znti0003hcug21z76yd9",
-      name: "Sauvage Elixir",
-      slug: "sauvage-elixir",
-      description:
-        "Wangi pria yang sangat kuat dengan karakter maskulin yang mendominasi. Aroma ini sempurna untuk pria yang ingin tampil percaya diri.",
-      imageUrl: "/perfume-bottle-elegant.jpg",
-      launchYear: 2021,
-      brand: { id: "cmhq164i50003u8ug9nh861k2", name: "Dior" },
-      category: { id: "cmhq2evig0000msugb4rcfxvr", name: "Aromatic Fougere" },
-      notes: [
-        { id: "1", name: "Bergamot", type: "TOP" },
-        { id: "2", name: "Pepper", type: "TOP" },
-        { id: "3", name: "Ambroxan", type: "MIDDLE" },
-        { id: "4", name: "Cedar", type: "BASE" },
-        { id: "5", name: "Sandalwood", type: "BASE" },
-      ],
+    if (!slug) {
+      throw new Error("Slug parameter is undefined.")
     }
 
-    if (mockParfum.slug !== slug) {
-      return NextResponse.json({ success: false, error: "Parfum not found" }, { status: 404 })
+    const connection = await pool.getConnection()
+
+    // 1. Ambil data parfum utama
+    const parfumQuery = `
+      SELECT p.*, 
+             b.id as brandId, b.name as brandName,
+             c.id as categoryId, c.name as categoryName 
+      FROM parfum p
+      LEFT JOIN brands b ON p.brandId = b.id
+      LEFT JOIN categories c ON p.categoryId = c.id
+      WHERE p.slug = ?
+      LIMIT 1
+    `
+    // Pastikan 'slug' sudah terisi sebelum eksekusi
+    const [parfumRows] = (await connection.execute(parfumQuery, [slug])) as any[]
+
+    if (parfumRows.length === 0) {
+      connection.release()
+      return NextResponse.json(
+        { success: false, error: "Parfum not found" },
+        { status: 404 },
+      )
+    }
+
+    const parfumData = parfumRows[0]
+
+    // 2. Ambil data notes untuk parfum ini
+    const notesQuery = `
+      SELECT n.id, n.name, pn.noteType
+      FROM parfum_notes pn
+      JOIN notes n ON pn.noteId = n.id
+      WHERE pn.parfumId = ?
+    `
+    const [notesRows] = (await connection.execute(notesQuery, [
+      parfumData.id,
+    ])) as any[]
+
+    connection.release()
+
+    // 3. Format data notes
+    const notes = notesRows.map((note: any) => ({
+      id: note.id,
+      name: note.name,
+      type: note.noteType,
+    }))
+
+    // 4. Gabungkan semua data
+    const { brandId, brandName, categoryId, categoryName, ...rest } = parfumData
+    const result = {
+      ...rest,
+      brand: { id: brandId, name: brandName },
+      category: { id: categoryId, name: categoryName },
+      notes: notes,
     }
 
     return NextResponse.json({
       success: true,
-      data: mockParfum,
+      data: result,
     })
   } catch (error) {
-    console.error("Error fetching parfum:", error)
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
+    // Gunakan variabel 'slug' yang sudah didefinisikan di atas
+    console.error(`Error fetching parfum ${slug || "undefined"}:`, error)
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 },
+    )
   }
 }
