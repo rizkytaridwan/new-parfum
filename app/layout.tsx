@@ -5,32 +5,33 @@ import { GeistSans } from "geist/font/sans";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
-
-// PT Serif hanya 400 & 700
 const ptSerif = PT_Serif({ subsets: ["latin"], weight: ["400", "700"] });
 
+// MODIFIKASI METADATA UNTUK SEO
 export const metadata: Metadata = {
-  title: "Parfum Premium - Koleksi Wangi Terbaik Indonesia",
+  title: {
+    default: "Ensiklopedia Parfum - Referensi & Ulasan Wangi Terlengkap",
+    template: "%s - Ensiklopedia Parfum",
+  },
   description:
-    "Jelajahi koleksi parfum premium dari brand internasional terkemuka. Dapatkan wangi eksklusif dengan harga kompetitif dan kualitas terjamin.",
+    "Cari referensi parfum original terlengkap. Baca ulasan, temukan komposisi aroma (notes), dan jelajahi ribuan parfum pria dan wanita dari brand terbaik.",
   keywords:
-    "parfum, wangi, brand internasional, parfum pria, parfum wanita, koleksi wangi",
-  applicationName: "Parfum Store",
-  authors: [{ name: "Parfum Premium" }],
-  creator: "Parfum Premium",
-  publisher: "Parfum Premium",
+    "referensi parfum, ulasan parfum, ensiklopedia parfum, notes parfum, aroma parfum, parfum pria, parfum wanita, database parfum, review parfum",
+  applicationName: "Ensiklopedia Parfum",
+  authors: [{ name: "Parfum Ref" }], // Ganti dengan nama Anda
+  creator: "Parfum Ref",
+  publisher: "Parfum Ref",
   robots: "index, follow",
   openGraph: {
     type: "website",
     locale: "id_ID",
-    url: "https://yoursite.com",
-    siteName: "Parfum Premium",
-    title: "Parfum Premium - Koleksi Wangi Terbaik",
-    description: "Jelajahi koleksi parfum premium dengan berbagai pilihan aroma.",
-    images: [{ url: "https://yoursite.com/og-image.png", width: 1200, height: 630, alt: "Parfum Premium" }],
+    url: "https://yoursite.com", // GANTI DENGAN DOMAIN ANDA
+    siteName: "Ensiklopedia Parfum",
+    title: "Ensiklopedia Parfum - Referensi & Ulasan Wangi",
+    description: "Database referensi parfum, ulasan, dan komposisi aroma terlengkap.",
+    images: [{ url: "https://yoursite.com/og-image.png", width: 1200, height: 630, alt: "Ensiklopedia Parfum" }],
   },
-  twitter: { card: "summary_large_image", title: "Parfum Premium", description: "Koleksi wangi terbaik" },
-  viewport: { width: "device-width", initialScale: 1, maximumScale: 5 },
+  twitter: { card: "summary_large_image", title: "Ensiklopedia Parfum", description: "Database referensi parfum terlengkap" },
   generator: "v0.app",
 };
 
@@ -45,13 +46,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="id">
       <head>
         <meta charSet="utf-8" />
-        <link rel="canonical" href="https://yoursite.com" />
+        <link rel="canonical" href="https://yoursite.com" /> {/* GANTI DENGAN DOMAIN ANDA */}
         <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
-        <link rel="alternate" hrefLang="id" href="https://yoursite.com" />
+        <link rel="alternate" hrefLang="id" href="https://yoursite.com" /> {/* GANTI DENGAN DOMAIN ANDA */}
         <meta name="google-site-verification" content="YOUR_GOOGLE_VERIFICATION_CODE" />
         <meta name="google-adsense-account" content="ca-pub-YOUR_ADSENSE_ID" />
       </head>
-      {/* Pakai GeistSans untuk body; PT Serif bisa dipakai untuk heading/elemen tertentu */}
       <body className={`${GeistSans.className} ${ptSerif.className} bg-background text-foreground antialiased`}>
         {children}
         <Analytics />

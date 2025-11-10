@@ -168,51 +168,52 @@ export default function ParfumsPage() {
           ) : filteredParfums.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredParfums.map((parfum) => (
-                <Link key={parfum.id} href={`/parfums/${parfum.slug}`}>
-                  <div className="group card-luxury overflow-hidden cursor-pointer h-full flex flex-col hover:shadow-xl transition-shadow">
-                    {/* Image */}
-                    <div className="relative w-full h-52 bg-muted overflow-hidden rounded-lg mb-3">
-                      {parfum.imageUrl ? (
-                        <Image
-                          src={parfum.imageUrl || "/placeholder.svg"}
-                          alt={parfum.name}
-                          fill
-                          className="object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                          <div className="text-center">
-                            <div className="text-3xl mb-1">💐</div>
-                            <p className="text-xs">No Image</p>
-                          </div>
-                        </div>
-                      )}
-                      <button className="absolute top-2 right-2 p-2 rounded-full bg-white/90 hover:bg-white transition">
-                        <Heart size={18} className="text-destructive" />
-                      </button>
-                    </div>
+  <Link key={parfum.id} href={`/parfums/${parfum.slug}`}>
+    {/* Ganti card-luxury standar dengan UI yang lebih content-focused */}
+    <div className="group card-luxury overflow-hidden cursor-pointer h-full flex flex-col hover:shadow-xl transition-shadow p-4">
+      {/* Image */}
+      <div className="relative w-full h-52 bg-muted overflow-hidden rounded-lg mb-4">
+        {parfum.imageUrl ? (
+          <Image
+            src={parfum.imageUrl || "/placeholder.svg"}
+            alt={parfum.name}
+            fill
+            className="object-cover group-hover:scale-110 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+            <div className="text-center">
+              <div className="text-3xl mb-1">💐</div>
+              <p className="text-xs">No Image</p>
+            </div>
+          </div>
+        )}
+        {/* Tombol Heart kita buat lebih subtle, muncul saat hover */}
+        <button className="absolute top-2 right-2 p-1.5 rounded-full bg-white/80 hover:bg-white transition opacity-0 group-hover:opacity-100">
+          <Heart size={16} className="text-destructive" />
+        </button>
+      </div>
 
-                    {/* Content */}
-                    <div className="flex-1">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">{parfum.brand.name}</p>
-                      <h3 className="text-sm font-semibold group-hover:text-primary transition line-clamp-2">
-                        {parfum.name}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{parfum.category.name}</p>
-                    </div>
+      {/* Content */}
+      <div className="flex-1 flex flex-col">
+        <p className="text-xs font-medium text-primary uppercase tracking-wide">{parfum.brand.name}</p>
+        <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition line-clamp-2 my-1">
+          {parfum.name}
+        </h3>
+        <p className="text-xs text-muted-foreground line-clamp-1">{parfum.category.name}</p>
+      </div>
 
-                    {/* Footer */}
-                    <div className="pt-3 border-t border-border mt-3 flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">{parfum.launchYear}</span>
-                      <div className="flex gap-0.5">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star key={i} size={12} className="fill-primary text-primary" />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+      {/* Footer Card */}
+      <div className="pt-3 border-t border-border mt-3 flex items-center justify-between">
+        <div className="flex gap-0.5 items-center">
+          <Star size={14} className="fill-primary text-primary" />
+          <span className="text-xs text-muted-foreground ml-1">(128 ulasan)</span>
+        </div>
+        <span className="text-xs font-medium text-muted-foreground">{parfum.launchYear}</span>
+      </div>
+    </div>
+  </Link>
+))}
             </div>
           ) : (
             <div className="text-center py-16">

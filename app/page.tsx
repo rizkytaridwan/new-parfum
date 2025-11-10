@@ -5,13 +5,14 @@ import { CategoryShowcase } from "@/components/category-showcase"
 import { Footer } from "@/components/footer"
 import type { Metadata } from "next"
 
+// MODIFIKASI METADATA HOMEPAGE
 export const metadata: Metadata = {
-  title: "Parfum Premium - Koleksi Wangi Terbaik Indonesia",
+  title: "Ensiklopedia Parfum - Referensi & Ulasan Wangi Terlengkap",
   description:
-    "Temukan wangi favorit Anda dari koleksi parfum premium. Brand internasional, harga kompetitif, kualitas terjamin.",
+    "Beranda Ensiklopedia Parfum. Cari referensi parfum original, baca ulasan, temukan komposisi aroma (notes), dan jelajahi ribuan parfum pria dan wanita.",
   openGraph: {
-    title: "Parfum Premium - Koleksi Wangi Terbaik",
-    description: "Jelajahi koleksi parfum premium dari brand terkemuka dunia",
+    title: "Ensiklopedia Parfum - Referensi & Ulasan Wangi",
+    description: "Database referensi parfum, ulasan, dan komposisi aroma terlengkap.",
     type: "website",
   },
 }
