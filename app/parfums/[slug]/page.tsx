@@ -1,3 +1,4 @@
+// app/parfums/[slug]/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -14,10 +15,11 @@ import {
   Info,
   BookOpen,
   Clock,
-  Users, 
+  Users,
 } from "lucide-react"
 import Link from "next/link"
 
+// PERBAIKAN 1: Update Interface
 interface Parfum {
   id: string
   name: string
@@ -25,11 +27,11 @@ interface Parfum {
   description: string
   imageUrl: string
   launchYear: number
-  audience: "Pria" | "Wanita" | "Unisex" 
+  audience: "Pria" | "Wanita" | "Unisex"
   brandId: string
   categoryId: string
-  brand: { id: string; name: string }
-  category: { id: string; name: string }
+  brand: { id: string; name: string; slug: string } // Tambahkan slug
+  category: { id: string; name: string; slug: string } // Tambahkan slug
 }
 
 interface Note {
@@ -66,6 +68,7 @@ export default function ParfumDetailPage() {
     fetchParfum()
   }, [slug])
 
+  // ... (kode loading, error, dan notes tetap sama) ...
   if (loading) {
     return (
       <main className="min-h-screen bg-background">
@@ -97,6 +100,7 @@ export default function ParfumDetailPage() {
   const middleNotes = notes.filter((n) => n.type === "MIDDLE")
   const baseNotes = notes.filter((n) => n.type === "BASE")
 
+
   return (
     <main className="min-h-screen bg-background">
       <Navigation />
@@ -104,7 +108,6 @@ export default function ParfumDetailPage() {
       {/* Breadcrumb */}
       <div className="container-luxury py-4 text-sm border-b border-border">
         {" "}
-        {/* Tambah border */}
         <div className="flex items-center gap-2 text-muted-foreground">
           <Link href="/" className="hover:text-primary">
             Beranda
@@ -124,9 +127,9 @@ export default function ParfumDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {/* Image */}
             <div className="flex flex-col">
+              {/* ... (kode gambar dan tombol tidak berubah) ... */}
               <div className="relative w-full h-96 md:h-[500px] bg-muted rounded-xl overflow-hidden mb-4 border border-border">
                 {" "}
-                {/* Tambah border */}
                 {parfum.imageUrl ? (
                   <Image
                     src={parfum.imageUrl || "/placeholder.svg"}
@@ -144,8 +147,6 @@ export default function ParfumDetailPage() {
                   </div>
                 )}
               </div>
-
-              {/* Actions -> Ganti jadi Tombol Simpan & Bagikan */}
               <div className="flex gap-3">
                 <button className="flex-1 inline-flex items-center justify-center rounded-lg border-2 border-primary text-primary px-6 py-3 font-semibold transition-all hover:bg-primary/5">
                   <Heart size={20} className="mr-2" />
@@ -162,26 +163,28 @@ export default function ParfumDetailPage() {
             <div>
               {/* Brand & Category */}
               <div className="flex items-center gap-3 mb-4">
+                {/* PERBAIKAN 2: Gunakan parfum.brand.slug */}
                 <Link
-                  href={`/brands/${parfum.brand.name.toLowerCase()}`}
+                  href={`/brands/${parfum.brand.slug}`}
                   className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full hover:bg-primary/20 transition"
                 >
                   {parfum.brand.name}
                 </Link>
+                {/* PERBAIKAN 3: Gunakan parfum.category.slug */}
                 <Link
-                  href={`/categories/${parfum.category.name.toLowerCase()}`}
+                  href={`/categories/${parfum.category.slug}`}
                   className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full hover:bg-border transition"
                 >
                   {parfum.category.name}
                 </Link>
               </div>
 
-              {/* Title */}
+              {/* ... (Sisa kode: Title, Rating, Description, Info Blok, Notes, dll. tetap sama) ... */}
+              
               <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
                 {parfum.name}
               </h1>
 
-              {/* Rating */}
               <div className="flex items-center gap-2 mb-6">
                 <div className="flex gap-1">
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -197,7 +200,6 @@ export default function ParfumDetailPage() {
                 </span>
               </div>
 
-              {/* Description */}
               <div className="mb-8 p-4 bg-muted/50 border-l-4 border-primary rounded-r-lg">
                 <h3 className="flex items-center text-lg font-serif font-semibold mb-2">
                   <Info size={18} className="mr-2 text-primary" />
@@ -205,7 +207,6 @@ export default function ParfumDetailPage() {
                 </h3>
                 <p className="text-base text-muted-foreground leading-relaxed">
                   {" "}
-                  {/* Font lebih besar */}
                   {parfum.description ||
                     "Parfum eksklusif dengan aroma yang menawan dan bertahan lama."}
                 </p>
@@ -230,7 +231,6 @@ export default function ParfumDetailPage() {
                     </p>
                   </div>
                 </div>
-                {/* PERUBAHAN 4: Tambahkan blok 'Audience' */}
                 <div className="flex items-start gap-3 bg-muted p-4 rounded-lg">
                   <Users size={20} className="text-primary mt-1 shrink-0" />
                   <div>
@@ -240,7 +240,6 @@ export default function ParfumDetailPage() {
                 </div>
               </div>
 
-              {/* Notes -> Ini adalah bagian SEO terpenting! */}
               {(topNotes.length > 0 ||
                 middleNotes.length > 0 ||
                 baseNotes.length > 0) && (
@@ -305,7 +304,6 @@ export default function ParfumDetailPage() {
                 </div>
               )}
 
-              {/* HILANGKAN TOMBOL BELI, GANTI DENGAN SLOT IKLAN */}
               <div className="mt-8 p-4 border border-dashed border-border rounded-lg text-center bg-muted h-64 flex items-center justify-center">
                 <p className="text-sm font-medium text-muted-foreground">
                   Slot Iklan AdSense (300x250 atau Responsif) <br />
@@ -317,20 +315,17 @@ export default function ParfumDetailPage() {
         </div>
       </section>
 
-      {/* Related Products -> Ganti jadi "Referensi Serupa" */}
+      {/* ... (Sisa kode <Footer /> tetap sama) ... */}
       <section className="py-16 bg-secondary/5">
         <div className="container-luxury">
           <h2 className="text-3xl font-serif font-bold mb-8">
             Referensi Serupa
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {/* Ini bisa di-fetch nanti, untuk sekarang placeholder */}
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="card-luxury p-4">
                 {" "}
-                {/* Kurangi padding */}
                 <div className="w-full h-40 bg-muted rounded-lg mb-4" />{" "}
-                {/* Kecilkan gambar */}
                 <p className="text-sm text-muted-foreground mb-1">Brand</p>
                 <h4 className="font-semibold text-base">Parfum Lainnya</h4>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -341,7 +336,7 @@ export default function ParfumDetailPage() {
           </div>
         </div>
       </section>
-
+      
       <Footer />
     </main>
   )

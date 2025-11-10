@@ -4,12 +4,10 @@ import pool from "@/lib/db"
 
 export async function GET(
   request: NextRequest,
-  // Ganti destructuring { params } menjadi context
   context: { params: { slug: string } },
 ) {
-  let slug: string | undefined // Definisikan slug di sini agar bisa diakses di catch block
+  let slug: string | undefined
   try {
-    // Await params seperti yang disarankan error log
     const params = await (context.params as any)
     slug = params.slug
 
@@ -20,17 +18,17 @@ export async function GET(
     const connection = await pool.getConnection()
 
     // 1. Ambil data parfum utama
+    // PERBAIKAN: Tambahkan b.slug dan c.slug
     const parfumQuery = `
       SELECT p.*, 
-             b.id as brandId, b.name as brandName,
-             c.id as categoryId, c.name as categoryName 
+             b.id as brandId, b.name as brandName, b.slug as brandSlug,
+             c.id as categoryId, c.name as categoryName, c.slug as categorySlug 
       FROM parfum p
       LEFT JOIN brands b ON p.brandId = b.id
       LEFT JOIN categories c ON p.categoryId = c.id
       WHERE p.slug = ?
       LIMIT 1
     `
-    // Pastikan 'slug' sudah terisi sebelum eksekusi
     const [parfumRows] = (await connection.execute(parfumQuery, [slug])) as any[]
 
     if (parfumRows.length === 0) {
@@ -43,7 +41,7 @@ export async function GET(
 
     const parfumData = parfumRows[0]
 
-    // 2. Ambil data notes untuk parfum ini
+    // 2. Ambil data notes
     const notesQuery = `
       SELECT n.id, n.name, pn.noteType
       FROM parfum_notes pn
@@ -56,7 +54,6 @@ export async function GET(
 
     connection.release()
 
-    // 3. Format data notes
     const notes = notesRows.map((note: any) => ({
       id: note.id,
       name: note.name,
@@ -64,12 +61,23 @@ export async function GET(
     }))
 
     // 4. Gabungkan semua data
-    const { brandId, brandName, categoryId, categoryName,audience, ...rest } = parfumData
+    // PERBAIKAN: Masukkan brandSlug dan categorySlug ke dalam objek
+    const {
+      brandId,
+      brandName,
+      brandSlug,
+      categoryId,
+      categoryName,
+      categorySlug,
+      audience,
+      ...rest
+    } = parfumData
+    
     const result = {
       ...rest,
       audience,
-      brand: { id: brandId, name: brandName },
-      category: { id: categoryId, name: categoryName },
+      brand: { id: brandId, name: brandName, slug: brandSlug }, // Tambahkan slug
+      category: { id: categoryId, name: categoryName, slug: categorySlug }, // Tambahkan slug
       notes: notes,
     }
 
@@ -78,7 +86,6 @@ export async function GET(
       data: result,
     })
   } catch (error) {
-    // Gunakan variabel 'slug' yang sudah didefinisikan di atas
     console.error(`Error fetching parfum ${slug || "undefined"}:`, error)
     return NextResponse.json(
       { success: false, error: "Internal server error" },
