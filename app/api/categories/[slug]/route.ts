@@ -56,9 +56,10 @@ export async function GET(
 
     // Transformasi data parfum
     const parfums = parfumRows.map((row: any) => {
-      const { brandId, brandName, categoryId, categoryName, ...rest } = row
+      const { brandId, brandName, categoryId, categoryName, audience, ...rest } = row
       return {
         ...rest,
+        audience,
         brand: { id: brandId, name: brandName },
         category: { id: categoryId, name: categoryName },
       }

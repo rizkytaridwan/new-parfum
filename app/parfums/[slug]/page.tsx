@@ -5,7 +5,17 @@ import Image from "next/image"
 import { useParams } from "next/navigation"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
-import { Heart, Share2, Star, ChevronRight, Info, BookOpen, Clock } from "lucide-react" // Import ikon baru
+
+import {
+  Heart,
+  Share2,
+  Star,
+  ChevronRight,
+  Info,
+  BookOpen,
+  Clock,
+  Users, 
+} from "lucide-react"
 import Link from "next/link"
 
 interface Parfum {
@@ -15,6 +25,7 @@ interface Parfum {
   description: string
   imageUrl: string
   launchYear: number
+  audience: "Pria" | "Wanita" | "Unisex" 
   brandId: string
   categoryId: string
   brand: { id: string; name: string }
@@ -91,7 +102,9 @@ export default function ParfumDetailPage() {
       <Navigation />
 
       {/* Breadcrumb */}
-      <div className="container-luxury py-4 text-sm border-b border-border"> {/* Tambah border */}
+      <div className="container-luxury py-4 text-sm border-b border-border">
+        {" "}
+        {/* Tambah border */}
         <div className="flex items-center gap-2 text-muted-foreground">
           <Link href="/" className="hover:text-primary">
             Beranda
@@ -111,7 +124,9 @@ export default function ParfumDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {/* Image */}
             <div className="flex flex-col">
-              <div className="relative w-full h-96 md:h-[500px] bg-muted rounded-xl overflow-hidden mb-4 border border-border"> {/* Tambah border */}
+              <div className="relative w-full h-96 md:h-[500px] bg-muted rounded-xl overflow-hidden mb-4 border border-border">
+                {" "}
+                {/* Tambah border */}
                 {parfum.imageUrl ? (
                   <Image
                     src={parfum.imageUrl || "/placeholder.svg"}
@@ -147,25 +162,39 @@ export default function ParfumDetailPage() {
             <div>
               {/* Brand & Category */}
               <div className="flex items-center gap-3 mb-4">
-                <Link href={`/brands/${parfum.brand.name.toLowerCase()}`} className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full hover:bg-primary/20 transition">
+                <Link
+                  href={`/brands/${parfum.brand.name.toLowerCase()}`}
+                  className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full hover:bg-primary/20 transition"
+                >
                   {parfum.brand.name}
                 </Link>
-                <Link href={`/categories/${parfum.category.name.toLowerCase()}`} className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full hover:bg-border transition">
+                <Link
+                  href={`/categories/${parfum.category.name.toLowerCase()}`}
+                  className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full hover:bg-border transition"
+                >
                   {parfum.category.name}
                 </Link>
               </div>
 
               {/* Title */}
-              <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">{parfum.name}</h1>
+              <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
+                {parfum.name}
+              </h1>
 
               {/* Rating */}
               <div className="flex items-center gap-2 mb-6">
                 <div className="flex gap-1">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} size={20} className="fill-primary text-primary" />
+                    <Star
+                      key={i}
+                      size={20}
+                      className="fill-primary text-primary"
+                    />
                   ))}
                 </div>
-                <span className="text-sm text-muted-foreground">(Berdasarkan 247 ulasan)</span>
+                <span className="text-sm text-muted-foreground">
+                  (Berdasarkan 247 ulasan)
+                </span>
               </div>
 
               {/* Description */}
@@ -174,40 +203,63 @@ export default function ParfumDetailPage() {
                   <Info size={18} className="mr-2 text-primary" />
                   Deskripsi Aroma
                 </h3>
-                <p className="text-base text-muted-foreground leading-relaxed"> {/* Font lebih besar */}
-                  {parfum.description || "Parfum eksklusif dengan aroma yang menawan dan bertahan lama."}
+                <p className="text-base text-muted-foreground leading-relaxed">
+                  {" "}
+                  {/* Font lebih besar */}
+                  {parfum.description ||
+                    "Parfum eksklusif dengan aroma yang menawan dan bertahan lama."}
                 </p>
               </div>
-              
-              {/* Info -> Ganti jadi Info Box */}
-              <div className="grid grid-cols-2 gap-4 mb-8">
+
+              <div className="grid grid-cols-3 gap-4 mb-8">
                 <div className="flex items-start gap-3 bg-muted p-4 rounded-lg">
                   <Clock size={20} className="text-primary mt-1 shrink-0" />
                   <div>
                     <p className="text-sm text-muted-foreground">Tahun Rilis</p>
-                    <p className="text-lg font-semibold">{parfum.launchYear}</p>
+                    <p className="text-lg font-semibold">
+                      {parfum.launchYear}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 bg-muted p-4 rounded-lg">
                   <BookOpen size={20} className="text-primary mt-1 shrink-0" />
                   <div>
                     <p className="text-sm text-muted-foreground">Kategori</p>
-                    <p className="text-lg font-semibold">{parfum.category.name}</p>
+                    <p className="text-lg font-semibold">
+                      {parfum.category.name}
+                    </p>
+                  </div>
+                </div>
+                {/* PERUBAHAN 4: Tambahkan blok 'Audience' */}
+                <div className="flex items-start gap-3 bg-muted p-4 rounded-lg">
+                  <Users size={20} className="text-primary mt-1 shrink-0" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Untuk</p>
+                    <p className="text-lg font-semibold">{parfum.audience}</p>
                   </div>
                 </div>
               </div>
 
               {/* Notes -> Ini adalah bagian SEO terpenting! */}
-              {(topNotes.length > 0 || middleNotes.length > 0 || baseNotes.length > 0) && (
+              {(topNotes.length > 0 ||
+                middleNotes.length > 0 ||
+                baseNotes.length > 0) && (
                 <div className="mb-8 border border-border p-6 rounded-lg">
-                  <h3 className="text-2xl font-serif font-semibold mb-6 text-center">Komposisi Aroma (Notes)</h3>
+                  <h3 className="text-2xl font-serif font-semibold mb-6 text-center">
+                    Komposisi Aroma (Notes)
+                  </h3>
 
                   {topNotes.length > 0 && (
                     <div className="mb-6">
-                      <p className="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">Top Notes (Aroma Awal)</p>
+                      <p className="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">
+                        Top Notes (Aroma Awal)
+                      </p>
                       <div className="flex flex-wrap gap-2">
                         {topNotes.map((note) => (
-                          <span key={note.id} className="px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                          <span
+                            key={note.id}
+                            className="px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium"
+                          >
                             {note.name}
                           </span>
                         ))}
@@ -217,10 +269,15 @@ export default function ParfumDetailPage() {
 
                   {middleNotes.length > 0 && (
                     <div className="mb-6">
-                      <p className="text-sm font-semibold text-accent mb-3 uppercase tracking-wider">Middle Notes (Aroma Tengah)</p>
+                      <p className="text-sm font-semibold text-accent mb-3 uppercase tracking-wider">
+                        Middle Notes (Aroma Tengah)
+                      </p>
                       <div className="flex flex-wrap gap-2">
                         {middleNotes.map((note) => (
-                          <span key={note.id} className="px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium">
+                          <span
+                            key={note.id}
+                            className="px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium"
+                          >
                             {note.name}
                           </span>
                         ))}
@@ -230,10 +287,15 @@ export default function ParfumDetailPage() {
 
                   {baseNotes.length > 0 && (
                     <div>
-                      <p className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Base Notes (Aroma Dasar)</p>
+                      <p className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider">
+                        Base Notes (Aroma Dasar)
+                      </p>
                       <div className="flex flex-wrap gap-2">
                         {baseNotes.map((note) => (
-                          <span key={note.id} className="px-4 py-2 rounded-full bg-muted text-muted-foreground text-sm font-medium">
+                          <span
+                            key={note.id}
+                            className="px-4 py-2 rounded-full bg-muted text-muted-foreground text-sm font-medium"
+                          >
                             {note.name}
                           </span>
                         ))}
@@ -250,7 +312,6 @@ export default function ParfumDetailPage() {
                   Tempatkan kode AdSense Anda di sini.
                 </p>
               </div>
-
             </div>
           </div>
         </div>
@@ -259,15 +320,22 @@ export default function ParfumDetailPage() {
       {/* Related Products -> Ganti jadi "Referensi Serupa" */}
       <section className="py-16 bg-secondary/5">
         <div className="container-luxury">
-          <h2 className="text-3xl font-serif font-bold mb-8">Referensi Serupa</h2>
+          <h2 className="text-3xl font-serif font-bold mb-8">
+            Referensi Serupa
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {/* Ini bisa di-fetch nanti, untuk sekarang placeholder */}
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="card-luxury p-4"> {/* Kurangi padding */}
-                <div className="w-full h-40 bg-muted rounded-lg mb-4" /> {/* Kecilkan gambar */}
+              <div key={i} className="card-luxury p-4">
+                {" "}
+                {/* Kurangi padding */}
+                <div className="w-full h-40 bg-muted rounded-lg mb-4" />{" "}
+                {/* Kecilkan gambar */}
                 <p className="text-sm text-muted-foreground mb-1">Brand</p>
                 <h4 className="font-semibold text-base">Parfum Lainnya</h4>
-                <p className="text-xs text-muted-foreground mt-1">Aromatic Fougere</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Aromatic Fougere
+                </p>
               </div>
             ))}
           </div>

@@ -64,9 +64,10 @@ export async function GET(
     }))
 
     // 4. Gabungkan semua data
-    const { brandId, brandName, categoryId, categoryName, ...rest } = parfumData
+    const { brandId, brandName, categoryId, categoryName,audience, ...rest } = parfumData
     const result = {
       ...rest,
+      audience,
       brand: { id: brandId, name: brandName },
       category: { id: categoryId, name: categoryName },
       notes: notes,

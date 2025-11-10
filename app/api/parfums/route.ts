@@ -38,9 +38,10 @@ export async function GET(request: NextRequest) {
     // Transformasi data agar sesuai dengan ekspektasi frontend
     // (misal: { ..., brand: { name: '...' }, category: { name: '...' } })
     const data = rows.map((row: any) => {
-      const { brandId, brandName, categoryId, categoryName, ...rest } = row
+      const { brandId, brandName, categoryId, categoryName, audience, ...rest } = row
       return {
         ...rest,
+        audience,
         brand: { id: brandId, name: brandName },
         category: { id: categoryId, name: categoryName },
       }
