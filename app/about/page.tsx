@@ -76,8 +76,7 @@ export default function AboutPage() {
                 Kami tidak menjual parfum, produk refill, atau produk apa pun.
               </p>
               <p>
-                Situs ini adalah proyek hobi yang didanai melalui iklan Google
-                AdSense. Informasi yang ditampilkan bertujuan untuk membantu
+                Informasi yang ditampilkan bertujuan untuk membantu
                 pengguna, dan kami tidak terafiliasi secara langsung dengan
                 brand parfum mana pun.
               </p>
