@@ -16,10 +16,11 @@ import {
   BookOpen,
   Clock,
   Users,
+  ShoppingCart, // (BARU) Impor ikon keranjang
 } from "lucide-react"
 import Link from "next/link"
 
-// PERBAIKAN 1: Update Interface
+// (UPDATE) Interface Parfum
 interface Parfum {
   id: string
   name: string
@@ -28,10 +29,22 @@ interface Parfum {
   imageUrl: string
   launchYear: number
   audience: "Pria" | "Wanita" | "Unisex"
+  shopeeUrl?: string | null // (BARU) Tambahkan shopeeUrl
   brandId: string
   categoryId: string
-  brand: { id: string; name: string; slug: string } // Tambahkan slug
-  category: { id: string; name: string; slug: string } // Tambahkan slug
+  brand: { id: string; name: string; slug: string }
+  category: { id: string; name: string; slug: string }
+}
+
+// (BARU) Interface untuk Parfum Serupa (lebih simpel)
+interface SimilarParfum {
+  id: string
+  name: string
+  slug: string
+  imageUrl: string
+  launchYear: number
+  brand: { name: string }
+  category: { name: string }
 }
 
 interface Note {
@@ -45,21 +58,33 @@ export default function ParfumDetailPage() {
   const slug = params.slug as string
   const [parfum, setParfum] = useState<Parfum | null>(null)
   const [notes, setNotes] = useState<Note[]>([])
+  const [similarParfums, setSimilarParfums] = useState<SimilarParfum[]>([]) // (BARU) State untuk parfum serupa
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchParfum = async () => {
+      if (!slug) return // Pastikan slug ada
+      
       try {
+        setLoading(true) // Set loading di awal
         const response = await fetch(`/api/parfums/${slug}`)
-        if (!response.ok) throw new Error("Parfum not found")
+        if (!response.ok) throw new Error("Parfum tidak ditemukan")
+        
         const data = await response.json()
-        setParfum(data.data)
-        if (data.data?.notes) {
-          setNotes(data.data.notes)
+        if (data.success) {
+          setParfum(data.data)
+          setNotes(data.data.notes || [])
+          setSimilarParfums(data.data.similarParfums || []) // (BARU) Set state parfum serupa
+          
+          // (SEO) Set judul halaman secara dinamis
+          document.title = `${data.data.name} - ${data.data.brand.name} | Ensiklopedia Parfum`
+        } else {
+          throw new Error(data.error || "Gagal mengambil data")
         }
-      } catch (err) {
-        setError("Parfum tidak ditemukan")
+      } catch (err: any) {
+        setError(err.message)
+        document.title = "Parfum Tidak Ditemukan | Ensiklopedia Parfum"
       } finally {
         setLoading(false)
       }
@@ -127,7 +152,7 @@ export default function ParfumDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {/* Image */}
             <div className="flex flex-col">
-              {/* ... (kode gambar dan tombol tidak berubah) ... */}
+              {/* ... (kode gambar tidak berubah) ... */}
               <div className="relative w-full h-96 md:h-[500px] bg-muted rounded-xl overflow-hidden mb-4 border border-border">
                 {" "}
                 {parfum.imageUrl ? (
@@ -147,10 +172,12 @@ export default function ParfumDetailPage() {
                   </div>
                 )}
               </div>
+              
+              {/* (UPDATE) Tombol Aksi */}
               <div className="flex gap-3">
                 <button className="flex-1 inline-flex items-center justify-center rounded-lg border-2 border-primary text-primary px-6 py-3 font-semibold transition-all hover:bg-primary/5">
                   <Heart size={20} className="mr-2" />
-                  Simpan ke Favorit
+                  Simpan
                 </button>
                 <button className="flex-1 inline-flex items-center justify-center rounded-lg border-2 border-border text-muted-foreground px-6 py-3 font-semibold transition-all hover:bg-muted">
                   <Share2 size={20} className="mr-2" />
@@ -163,14 +190,12 @@ export default function ParfumDetailPage() {
             <div>
               {/* Brand & Category */}
               <div className="flex items-center gap-3 mb-4">
-                {/* PERBAIKAN 2: Gunakan parfum.brand.slug */}
                 <Link
                   href={`/brands/${parfum.brand.slug}`}
                   className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full hover:bg-primary/20 transition"
                 >
                   {parfum.brand.name}
                 </Link>
-                {/* PERBAIKAN 3: Gunakan parfum.category.slug */}
                 <Link
                   href={`/categories/${parfum.category.slug}`}
                   className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full hover:bg-border transition"
@@ -178,9 +203,8 @@ export default function ParfumDetailPage() {
                   {parfum.category.name}
                 </Link>
               </div>
-
-              {/* ... (Sisa kode: Title, Rating, Description, Info Blok, Notes, dll. tetap sama) ... */}
               
+              {/* ... (Kode Judul, Rating, Deskripsi, Info Box tetap sama) ... */}
               <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
                 {parfum.name}
               </h1>
@@ -240,6 +264,7 @@ export default function ParfumDetailPage() {
                 </div>
               </div>
 
+              {/* ... (Kode Komposisi Aroma/Notes tetap sama) ... */}
               {(topNotes.length > 0 ||
                 middleNotes.length > 0 ||
                 baseNotes.length > 0) && (
@@ -247,7 +272,6 @@ export default function ParfumDetailPage() {
                   <h3 className="text-2xl font-serif font-semibold mb-6 text-center">
                     Komposisi Aroma (Notes)
                   </h3>
-
                   {topNotes.length > 0 && (
                     <div className="mb-6">
                       <p className="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">
@@ -265,7 +289,6 @@ export default function ParfumDetailPage() {
                       </div>
                     </div>
                   )}
-
                   {middleNotes.length > 0 && (
                     <div className="mb-6">
                       <p className="text-sm font-semibold text-accent mb-3 uppercase tracking-wider">
@@ -283,7 +306,6 @@ export default function ParfumDetailPage() {
                       </div>
                     </div>
                   )}
-
                   {baseNotes.length > 0 && (
                     <div>
                       <p className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider">
@@ -304,6 +326,33 @@ export default function ParfumDetailPage() {
                 </div>
               )}
 
+              {/* (BARU) Tombol Afiliasi Shopee */}
+              <div className="mt-8">
+                {parfum.shopeeUrl ? (
+                  <Link
+                    href={parfum.shopeeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full btn-luxury text-lg py-4 flex items-center justify-center bg-[#FF5722] hover:bg-[#E64A19] text-white"
+                  >
+                    <ShoppingCart size={20} className="mr-2" />
+                    Beli di Shopee
+                  </Link>
+                ) : (
+                  <button
+                    className="w-full btn-luxury text-lg py-4 opacity-50 cursor-not-allowed"
+                    disabled
+                    title="Link afiliasi belum tersedia"
+                  >
+                    Link belum tersedia
+                  </button>
+                )}
+                <p className="text-xs text-muted-foreground text-center mt-3">
+                  *Ini adalah link afiliasi. Kami mungkin mendapat komisi.
+                </p>
+              </div>
+
+              {/* Slot Iklan AdSense */}
               <div className="mt-8 p-4 border border-dashed border-border rounded-lg text-center bg-muted h-64 flex items-center justify-center">
                 <p className="text-sm font-medium text-muted-foreground">
                   Slot Iklan AdSense (300x250 atau Responsif) <br />
@@ -315,27 +364,51 @@ export default function ParfumDetailPage() {
         </div>
       </section>
 
-      {/* ... (Sisa kode <Footer /> tetap sama) ... */}
-      <section className="py-16 bg-secondary/5">
-        <div className="container-luxury">
-          <h2 className="text-3xl font-serif font-bold mb-8">
-            Referensi Serupa
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="card-luxury p-4">
-                {" "}
-                <div className="w-full h-40 bg-muted rounded-lg mb-4" />{" "}
-                <p className="text-sm text-muted-foreground mb-1">Brand</p>
-                <h4 className="font-semibold text-base">Parfum Lainnya</h4>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Aromatic Fougere
-                </p>
-              </div>
-            ))}
+      {/* (BARU) Section Referensi Serupa yang Dinamis */}
+      {similarParfums.length > 0 && (
+        <section className="py-16 bg-secondary/5">
+          <div className="container-luxury">
+            <h2 className="text-3xl font-serif font-bold mb-8">
+              Referensi Serupa
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {similarParfums.map((p) => (
+                <Link key={p.id} href={`/parfums/${p.slug}`}>
+                  <div className="group card-luxury overflow-hidden cursor-pointer h-full flex flex-col hover:shadow-xl transition-shadow p-4">
+                    <div className="relative w-full h-40 bg-muted overflow-hidden rounded-lg mb-4">
+                      {p.imageUrl ? (
+                        <Image
+                          src={p.imageUrl || "/placeholder.svg"}
+                          alt={p.name}
+                          fill
+                          className="object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                          <div className="text-center">
+                            <div className="text-3xl mb-1">💐</div>
+                            <p className="text-xs">No Image</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 flex flex-col">
+                      <p className="text-xs font-medium text-primary uppercase tracking-wide">{p.brand.name}</p>
+                      <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition line-clamp-2 my-1">
+                        {p.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground line-clamp-1">{p.category.name}</p>
+                    </div>
+                    <div className="pt-3 border-t border-border mt-3 flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted-foreground">{p.launchYear}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
       
       <Footer />
     </main>

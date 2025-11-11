@@ -18,7 +18,6 @@ export async function GET(
     const connection = await pool.getConnection()
 
     // 1. Ambil data parfum utama
-    // PERBAIKAN: Tambahkan b.slug dan c.slug
     const parfumQuery = `
       SELECT p.*, 
              b.id as brandId, b.name as brandName, b.slug as brandSlug,
@@ -52,16 +51,58 @@ export async function GET(
       parfumData.id,
     ])) as any[]
 
-    connection.release()
-
     const notes = notesRows.map((note: any) => ({
       id: note.id,
       name: note.name,
       type: note.noteType,
     }))
 
-    // 4. Gabungkan semua data
-    // PERBAIKAN: Masukkan brandSlug dan categorySlug ke dalam objek
+    // 3. (BARU) Ambil data parfum serupa (2 dari brand, 2 dari kategori)
+    // Ini query yang canggih untuk mengambil referensi relevan tanpa duplikat
+    const similarQuery = `
+      (SELECT p.id, p.name, p.slug, p.imageUrl, p.launchYear, 
+              b.name as brandName, b.slug as brandSlug, 
+              c.name as categoryName, c.slug as categorySlug
+       FROM parfum p
+       LEFT JOIN brands b ON p.brandId = b.id
+       LEFT JOIN categories c ON p.categoryId = c.id
+       WHERE p.brandId = ? AND p.id != ?
+       ORDER BY RAND()
+       LIMIT 2)
+      UNION
+      (SELECT p.id, p.name, p.slug, p.imageUrl, p.launchYear, 
+              b.name as brandName, b.slug as brandSlug, 
+              c.name as categoryName, c.slug as categorySlug
+       FROM parfum p
+       LEFT JOIN brands b ON p.brandId = b.id
+       LEFT JOIN categories c ON p.categoryId = c.id
+       WHERE p.categoryId = ? AND p.id != ? AND p.brandId != ?
+       ORDER BY RAND()
+       LIMIT 2)
+      LIMIT 4
+    `
+    const [similarRows] = (await connection.execute(similarQuery, [
+      parfumData.brandId,
+      parfumData.id,
+      parfumData.categoryId,
+      parfumData.id,
+      parfumData.brandId,
+    ])) as any[]
+
+    connection.release()
+
+    // 4. (BARU) Transformasi data parfum serupa
+    const similarParfums = similarRows.map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      imageUrl: row.imageUrl,
+      launchYear: row.launchYear,
+      brand: { name: row.brandName, slug: row.brandSlug },
+      category: { name: row.categoryName, slug: row.categorySlug },
+    }))
+
+    // 5. Gabungkan semua data
     const {
       brandId,
       brandName,
@@ -76,9 +117,10 @@ export async function GET(
     const result = {
       ...rest,
       audience,
-      brand: { id: brandId, name: brandName, slug: brandSlug }, // Tambahkan slug
-      category: { id: categoryId, name: categoryName, slug: categorySlug }, // Tambahkan slug
+      brand: { id: brandId, name: brandName, slug: brandSlug },
+      category: { id: categoryId, name: categoryName, slug: categorySlug },
       notes: notes,
+      similarParfums: similarParfums, // (BARU) Tambahkan ini
     }
 
     return NextResponse.json({
