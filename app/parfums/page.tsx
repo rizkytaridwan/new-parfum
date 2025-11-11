@@ -1,8 +1,14 @@
+// app/parfums/page.tsx
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import {
+  useRouter,
+  usePathname,
+  useSearchParams,
+} from "next/navigation"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import {
@@ -14,7 +20,7 @@ import {
   ChevronsUpDown,
 } from "lucide-react"
 
-// (BARU) Impor komponen untuk Combobox
+// Impor komponen UI
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -31,7 +37,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-// --- Interface Data (Tidak Berubah) ---
+// --- Interface Data ---
 interface Parfum {
   id: string
   name: string
@@ -56,25 +62,55 @@ interface Category {
 }
 
 export default function ParfumsPage() {
+  // State untuk data
   const [parfums, setParfums] = useState<Parfum[]>([])
   const [loading, setLoading] = useState(true)
   const [totalParfums, setTotalParfums] = useState(0)
 
-  // State untuk filter
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedBrandSlug, setSelectedBrandSlug] = useState("")
-  const [selectedCategorySlug, setSelectedCategorySlug] = useState("")
-  const [selectedAudience, setSelectedAudience] = useState("")
-
-  // State untuk mengisi dropdown filter
+  // State untuk dropdown
   const [brands, setBrands] = useState<Brand[]>([])
   const [categories, setCategories] = useState<Category[]>([])
 
-  // (BARU) State untuk membuka/menutup Popover Combobox
+  // State untuk Popover
   const [brandPopoverOpen, setBrandPopoverOpen] = useState(false)
   const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false)
 
+  // (MODIFIKASI) Gunakan hook Next.js untuk manajemen URL
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  // (MODIFIKASI) Baca filter langsung dari URL
+  const searchTerm = searchParams.get("search") || ""
+  const selectedBrandSlug = searchParams.get("brandSlug") || ""
+  const selectedCategorySlug = searchParams.get("categorySlug") || ""
+  const selectedAudience = searchParams.get("audience") || ""
+
+  // (MODIFIKASI) Buat fungsi untuk memperbarui URL
+  const handleFilterChange = useCallback(
+    (key: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (value) {
+        params.set(key, value)
+      } else {
+        params.delete(key)
+      }
+      // Gunakan router.push untuk memperbarui URL tanpa me-refresh halaman
+      router.push(pathname + "?" + params.toString())
+    },
+    [pathname, router, searchParams],
+  )
+  
+  // (MODIFIKASI) Fungsi untuk menangani debounce input pencarian
+  // Ini mencegah pemanggilan API pada setiap ketikan
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    // Update URL secara real-time (atau bisa ditambahkan debounce)
+     handleFilterChange("search", value)
+  }
+
   // useEffect untuk mengambil data filter (Brands & Categories)
+  // (Tidak berubah)
   useEffect(() => {
     const fetchFilterData = async () => {
       try {
@@ -93,17 +129,14 @@ export default function ParfumsPage() {
     fetchFilterData()
   }, [])
 
-  // useEffect untuk mengambil data parfum berdasarkan filter
+  // (MODIFIKASI) useEffect untuk mengambil data parfum
+  // Sekarang bergantung pada `searchParams` (dari URL), bukan state.
   useEffect(() => {
     const fetchParfums = async () => {
       setLoading(true)
-      const params = new URLSearchParams()
-
-      if (searchTerm) params.set("search", searchTerm)
-      if (selectedBrandSlug) params.set("brandSlug", selectedBrandSlug)
-      if (selectedCategorySlug) params.set("categorySlug", selectedCategorySlug)
-      if (selectedAudience) params.set("audience", selectedAudience)
-
+      // Gunakan searchParams yang ada untuk query API
+      const params = new URLSearchParams(searchParams.toString())
+      
       try {
         const response = await fetch(`/api/parfums?${params.toString()}`)
         const data = await response.json()
@@ -116,28 +149,16 @@ export default function ParfumsPage() {
       }
     }
 
-    // Tambahkan debounce kecil agar tidak memanggil API terlalu sering saat mengetik
-    const timer = setTimeout(() => {
-      fetchParfums()
-    }, 300) // 300ms debounce
-
-    return () => clearTimeout(timer)
-  }, [searchTerm, selectedBrandSlug, selectedCategorySlug, selectedAudience])
+    fetchParfums()
+  }, [searchParams]) // <-- Bergantung pada searchParams
 
   const resetFilters = () => {
-    setSearchTerm("")
-    setSelectedBrandSlug("")
-    setSelectedCategorySlug("")
-    setSelectedAudience("")
+    router.push(pathname) // Hapus semua query params
   }
 
-  const isFiltered =
-    searchTerm ||
-    selectedBrandSlug ||
-    selectedCategorySlug ||
-    selectedAudience
+  const isFiltered = searchParams.size > 0
 
-  // (BARU) Helper untuk mendapatkan nama brand/kategori yang dipilih
+  // Helper untuk mendapatkan nama brand/kategori yang dipilih
   const selectedBrandName =
     brands.find((b) => b.slug === selectedBrandSlug)?.name || "Pilih Brand..."
   const selectedCategoryName =
@@ -173,13 +194,14 @@ export default function ParfumsPage() {
               <input
                 type="text"
                 placeholder="Cari parfum..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                // (MODIFIKASI) Gunakan defaultValue untuk sinkronisasi awal
+                defaultValue={searchTerm} 
+                onChange={handleSearchChange}
                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
-            {/* (BARU) Brand Combobox */}
+            {/* Brand Combobox */}
             <Popover open={brandPopoverOpen} onOpenChange={setBrandPopoverOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -188,9 +210,7 @@ export default function ParfumsPage() {
                   aria-expanded={brandPopoverOpen}
                   className="w-full justify-between bg-input hover:bg-muted"
                 >
-                  <span className="truncate">
-                    {selectedBrandName}
-                  </span>
+                  <span className="truncate">{selectedBrandName}</span>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
@@ -202,14 +222,16 @@ export default function ParfumsPage() {
                     <CommandGroup>
                       <CommandItem
                         onSelect={() => {
-                          setSelectedBrandSlug("")
+                          handleFilterChange("brandSlug", "")
                           setBrandPopoverOpen(false)
                         }}
                       >
                         <Check
                           className={cn(
                             "mr-2 h-4 w-4",
-                            selectedBrandSlug === "" ? "opacity-100" : "opacity-0",
+                            selectedBrandSlug === ""
+                              ? "opacity-100"
+                              : "opacity-0",
                           )}
                         />
                         Semua Brand
@@ -219,7 +241,7 @@ export default function ParfumsPage() {
                           key={brand.id}
                           value={brand.name}
                           onSelect={() => {
-                            setSelectedBrandSlug(brand.slug)
+                            handleFilterChange("brandSlug", brand.slug)
                             setBrandPopoverOpen(false)
                           }}
                         >
@@ -240,7 +262,7 @@ export default function ParfumsPage() {
               </PopoverContent>
             </Popover>
 
-            {/* (BARU) Category Combobox */}
+            {/* Category Combobox */}
             <Popover
               open={categoryPopoverOpen}
               onOpenChange={setCategoryPopoverOpen}
@@ -252,9 +274,7 @@ export default function ParfumsPage() {
                   aria-expanded={categoryPopoverOpen}
                   className="w-full justify-between bg-input hover:bg-muted"
                 >
-                  <span className="truncate">
-                    {selectedCategoryName}
-                  </span>
+                  <span className="truncate">{selectedCategoryName}</span>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
@@ -266,7 +286,7 @@ export default function ParfumsPage() {
                     <CommandGroup>
                       <CommandItem
                         onSelect={() => {
-                          setSelectedCategorySlug("")
+                          handleFilterChange("categorySlug", "")
                           setCategoryPopoverOpen(false)
                         }}
                       >
@@ -285,7 +305,7 @@ export default function ParfumsPage() {
                           key={cat.id}
                           value={cat.name}
                           onSelect={() => {
-                            setSelectedCategorySlug(cat.slug)
+                            handleFilterChange("categorySlug", cat.slug)
                             setCategoryPopoverOpen(false)
                           }}
                         >
@@ -306,10 +326,10 @@ export default function ParfumsPage() {
               </PopoverContent>
             </Popover>
 
-            {/* Audience Filter (Tetap <select> karena opsinya sedikit) */}
+            {/* Audience Filter */}
             <select
-              value={selectedAudience}
-              onChange={(e) => setSelectedAudience(e.target.value)}
+              value={selectedAudience} // (MODIFIKASI) Tetap value
+              onChange={(e) => handleFilterChange("audience", e.target.value)}
               className="px-4 py-2 rounded-lg border border-border bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Semua Audience</option>
@@ -340,7 +360,7 @@ export default function ParfumsPage() {
         </div>
       </section>
 
-      {/* Parfums Grid */}
+      {/* Parfums Grid (Tidak ada perubahan di sini) */}
       <section className="py-12 md:py-16">
         <div className="container-luxury">
           {loading ? (
