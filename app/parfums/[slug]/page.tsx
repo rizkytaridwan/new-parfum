@@ -29,7 +29,7 @@ interface Parfum {
   imageUrl: string
   launchYear: number
   audience: "Pria" | "Wanita" | "Unisex"
-  shopeeUrl?: string | null // (BARU) Tambahkan shopeeUrl
+  shopeeUrl?: string | null 
   brandId: string
   categoryId: string
   brand: { id: string; name: string; slug: string }
@@ -347,9 +347,7 @@ export default function ParfumDetailPage() {
                     Link belum tersedia
                   </button>
                 )}
-                <p className="text-xs text-muted-foreground text-center mt-3">
-                  *Ini adalah link afiliasi. Kami mungkin mendapat komisi.
-                </p>
+                
               </div>
 
               {/* Slot Iklan AdSense */}
