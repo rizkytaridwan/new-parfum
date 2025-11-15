@@ -18,6 +18,7 @@ import {
   X,
   Check,
   ChevronsUpDown,
+  Loader2, // BARU: Import Loader2 untuk loading spinner
 } from "lucide-react"
 
 // Impor komponen UI
@@ -36,6 +37,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+
+// Import Skeleton untuk loading state yang lebih baik
+import { Skeleton } from "@/components/ui/skeleton"
+
+// --- KONSTANTA PAGINATION ---
+const ITEMS_PER_LOAD = 20 // Jumlah item yang dimuat per langkah
+const MAX_DROPDOWN_ITEMS = 10; // Pembatasan tampilan dropdown
 
 // --- Interface Data ---
 interface Parfum {
@@ -64,8 +72,10 @@ interface Category {
 export default function ParfumsPage() {
   // State untuk data
   const [parfums, setParfums] = useState<Parfum[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(true) // Loading awal / saat filter berubah
+  const [loadingMore, setLoadingMore] = useState(false) // BARU: Loading saat klik "Muat Lebih Banyak"
   const [totalParfums, setTotalParfums] = useState(0)
+  const [hasMore, setHasMore] = useState(true) // BARU: Indikator apakah masih ada data
 
   // State untuk dropdown
   const [brands, setBrands] = useState<Brand[]>([])
@@ -75,18 +85,21 @@ export default function ParfumsPage() {
   const [brandPopoverOpen, setBrandPopoverOpen] = useState(false)
   const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false)
 
-  // (MODIFIKASI) Gunakan hook Next.js untuk manajemen URL
+  // Hook Next.js
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  // (MODIFIKASI) Baca filter langsung dari URL
+  // Baca filter dari URL
   const searchTerm = searchParams.get("search") || ""
   const selectedBrandSlug = searchParams.get("brandSlug") || ""
   const selectedCategorySlug = searchParams.get("categorySlug") || ""
   const selectedAudience = searchParams.get("audience") || ""
+  
+  // Ambil semua query params saat ini sebagai string (untuk dependency useCallback)
+  const currentFilters = searchParams.toString();
 
-  // (MODIFIKASI) Buat fungsi untuk memperbarui URL
+  // Fungsi untuk memperbarui URL (tetap sama)
   const handleFilterChange = useCallback(
     (key: string, value: string) => {
       const params = new URLSearchParams(searchParams.toString())
@@ -95,22 +108,73 @@ export default function ParfumsPage() {
       } else {
         params.delete(key)
       }
-      // Gunakan router.push untuk memperbarui URL tanpa me-refresh halaman
       router.push(pathname + "?" + params.toString())
     },
     [pathname, router, searchParams],
   )
   
-  // (MODIFIKASI) Fungsi untuk menangani debounce input pencarian
-  // Ini mencegah pemanggilan API pada setiap ketikan
+  // Fungsi untuk menangani debounce input pencarian (tetap sama)
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
-    // Update URL secara real-time (atau bisa ditambahkan debounce)
      handleFilterChange("search", value)
   }
 
-  // useEffect untuk mengambil data filter (Brands & Categories)
-  // (Tidak berubah)
+  // --- LOGIC FETCH DATA UTAMA (DIOPTIMALKAN) ---
+  const fetchParfums = useCallback(
+    async (currentSkip: number, isInitialLoad: boolean) => {
+      if (isInitialLoad) {
+        setLoading(true)
+        setParfums([]) // Kosongkan array untuk load awal/filter baru
+      } else {
+        setLoadingMore(true)
+      }
+
+      const params = new URLSearchParams(currentFilters)
+      params.set("limit", ITEMS_PER_LOAD.toString())
+      params.set("skip", currentSkip.toString())
+
+      try {
+        const response = await fetch(`/api/parfums?${params.toString()}`)
+        const data = await response.json()
+        const newParfums = data.data || []
+        const newTotal = data.total || 0
+
+        // 1. Update list parfum
+        setParfums((prev) => 
+          isInitialLoad ? newParfums : [...prev, ...newParfums]
+        )
+        
+        // 2. Update total parfum
+        setTotalParfums(newTotal)
+
+        // 3. Tentukan apakah masih ada data yang bisa dimuat
+        setHasMore((currentSkip + newParfums.length) < newTotal)
+
+      } catch (error) {
+        console.error("Error fetching parfums:", error)
+      } finally {
+        if (isInitialLoad) {
+          setLoading(false)
+        } else {
+          setLoadingMore(false)
+        }
+      }
+    },
+    [currentFilters]
+  );
+  
+  // Fungsi untuk memicu pemuatan data selanjutnya
+  const loadMore = () => {
+    if (hasMore && !loadingMore && !loading) {
+      // Gunakan panjang array saat ini sebagai nilai 'skip' (offset)
+      fetchParfums(parfums.length, false)
+    }
+  };
+
+
+  // --- SIDE EFFECTS ---
+
+  // 1. useEffect untuk mengambil data filter (Brands & Categories) - (Tidak berubah)
   useEffect(() => {
     const fetchFilterData = async () => {
       try {
@@ -129,28 +193,16 @@ export default function ParfumsPage() {
     fetchFilterData()
   }, [])
 
-  // (MODIFIKASI) useEffect untuk mengambil data parfum
-  // Sekarang bergantung pada `searchParams` (dari URL), bukan state.
+  // 2. useEffect untuk memuat data awal setiap kali FILTER berubah di URL (tetap)
   useEffect(() => {
-    const fetchParfums = async () => {
-      setLoading(true)
-      // Gunakan searchParams yang ada untuk query API
-      const params = new URLSearchParams(searchParams.toString())
-      
-      try {
-        const response = await fetch(`/api/parfums?${params.toString()}`)
-        const data = await response.json()
-        setParfums(data.data || [])
-        setTotalParfums(data.total || 0)
-      } catch (error) {
-        console.error("Error fetching parfums:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
+    // Reset status saat filter berubah
+    setHasMore(true); 
+    // Memanggil fetch dengan skip=0 (load awal)
+    fetchParfums(0, true); 
+  }, [currentFilters, fetchParfums]);
 
-    fetchParfums()
-  }, [searchParams]) // <-- Bergantung pada searchParams
+
+  // --- UTILS & RENDERING ---
 
   const resetFilters = () => {
     router.push(pathname) // Hapus semua query params
@@ -164,32 +216,26 @@ export default function ParfumsPage() {
   const selectedCategoryName =
     categories.find((c) => c.slug === selectedCategorySlug)?.name ||
     "Pilih Kategori..."
+    
+  // Logika tampilan untuk skeleton dan no results
+  const showInitialLoading = loading && parfums.length === 0;
+  const showNoResults = !loading && parfums.length === 0;
 
-  return (
+
+return (
     <main className="min-h-screen bg-background">
       <Navigation />
 
-      {/* Header */}
-      <section className="py-12 md:py-16 bg-secondary/5">
+      {/* Filters & Search Section */}
+      <section className="py-8 border-b border-border sticky top-16 bg-card z-40">
         <div className="container-luxury">
           <h1 className="text-3xl md:text-4xl font-serif font-bold mb-4">
             Koleksi Lengkap Parfum
           </h1>
-          <p className="text-muted-foreground max-w-2xl">
-            Jelajahi pilihan wangi premium dari brand nasional terkemuka.
-          </p>
-        </div>
-      </section>
-
-      {/* Filters & Search (DIOPTIMALKAN UNTUK MOBILE) */}
-      <section className="py-8 border-b border-border sticky top-16 bg-card z-40">
-        <div className="container-luxury">
-          {/* PERBAIKAN: Gunakan grid-cols-2 untuk mobile, dan 4 untuk md ke atas. 
-                      Atur agar Search mengambil 2 kolom di mobile/kecil. */}
+          {/* Filters Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4"> 
             
             {/* Search Input */}
-            {/* PERBAIKAN: Gunakan col-span-2 di bawah md, 1 di md. */}
             <div className="relative col-span-2 md:col-span-1">
               <Search
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
@@ -205,7 +251,6 @@ export default function ParfumsPage() {
             </div>
 
             {/* Brand Combobox */}
-            {/* PERBAIKAN: Mengatur lebar agar tidak melebar berlebihan dan tumpang tindih */}
             <Popover open={brandPopoverOpen} onOpenChange={setBrandPopoverOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -218,17 +263,12 @@ export default function ParfumsPage() {
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              {/* PERBAIKAN UTAMA DI SINI: Naikkan z-index menjadi z-[51] atau lebih tinggi dari container sticky filter (z-40). 
-                   Juga pastikan PopoverContent tidak terlalu lebar di mobile. 
-                   Kita akan set lebar statis di desktop, dan 100% lebar kolom di mobile. */}
               <PopoverContent className="w-[100%] md:w-[var(--radix-popover-trigger-width)] p-0 z-[51]">
                 <Command>
-                  {/* ... (Konten Command tetap sama) ... */}
                   <CommandInput placeholder="Cari brand..." />
                   <CommandList>
                     <CommandEmpty>Brand tidak ditemukan.</CommandEmpty>
                     <CommandGroup>
-                      {/* ... (CommandItem Brand tetap sama) ... */}
                       <CommandItem
                         onSelect={() => {
                           handleFilterChange("brandSlug", "")
@@ -245,7 +285,8 @@ export default function ParfumsPage() {
                         />
                         Semua Brand
                       </CommandItem>
-                      {brands.map((brand) => (
+                      {/* PEMBATASAN BRAND: Hanya tampilkan MAX_DROPDOWN_ITEMS */}
+                      {brands.slice(0, MAX_DROPDOWN_ITEMS).map((brand) => (
                         <CommandItem
                           key={brand.id}
                           value={brand.name}
@@ -265,6 +306,11 @@ export default function ParfumsPage() {
                           {brand.name}
                         </CommandItem>
                       ))}
+                       {brands.length > MAX_DROPDOWN_ITEMS && (
+                            <p className="text-center text-xs text-muted-foreground p-2">
+                                Tampilkan {MAX_DROPDOWN_ITEMS} dari {brands.length} brand. Gunakan pencarian untuk filter.
+                            </p>
+                        )}
                     </CommandGroup>
                   </CommandList>
                 </Command>
@@ -287,15 +333,12 @@ export default function ParfumsPage() {
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              {/* PERBAIKAN UTAMA DI SINI: Naikkan z-index menjadi z-[51] */}
               <PopoverContent className="w-[100%] md:w-[var(--radix-popover-trigger-width)] p-0 z-[51]">
                 <Command>
-                  {/* ... (Konten Command tetap sama) ... */}
                   <CommandInput placeholder="Cari kategori..." />
                   <CommandList>
                     <CommandEmpty>Kategori tidak ditemukan.</CommandEmpty>
                     <CommandGroup>
-                      {/* ... (CommandItem Category tetap sama) ... */}
                       <CommandItem
                         onSelect={() => {
                           handleFilterChange("categorySlug", "")
@@ -312,7 +355,8 @@ export default function ParfumsPage() {
                         />
                         Semua Kategori
                       </CommandItem>
-                      {categories.map((cat) => (
+                      {/* PEMBATASAN KATEGORI: Hanya tampilkan MAX_DROPDOWN_ITEMS */}
+                      {categories.slice(0, MAX_DROPDOWN_ITEMS).map((cat) => (
                         <CommandItem
                           key={cat.id}
                           value={cat.name}
@@ -332,6 +376,11 @@ export default function ParfumsPage() {
                           {cat.name}
                         </CommandItem>
                       ))}
+                      {categories.length > MAX_DROPDOWN_ITEMS && (
+                            <p className="text-center text-xs text-muted-foreground p-2">
+                                Tampilkan {MAX_DROPDOWN_ITEMS} dari {categories.length} kategori. Gunakan pencarian untuk filter.
+                            </p>
+                        )}
                     </CommandGroup>
                   </CommandList>
                 </Command>
@@ -354,7 +403,8 @@ export default function ParfumsPage() {
           {/* Tampilan info filter */}
           <div className="flex justify-between items-center mt-4">
             <p className="text-sm text-muted-foreground">
-              {loading
+              {/* Tampilkan total data yang sudah dimuat */}
+              {loading && parfums.length === 0
                 ? "Mencari..."
                 : `Menampilkan ${parfums.length} dari ${totalParfums} parfum`}
             </p>
@@ -372,75 +422,22 @@ export default function ParfumsPage() {
         </div>
       </section>
 
-      {/* Parfums Grid (DIOPTIMALKAN STRUKTUR KARTU) */}
+      {/* Parfums Grid */}
       <section className="py-12 md:py-16">
         <div className="container-luxury">
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div
+          {showInitialLoading ? (
+            // Skeleton untuk initial load
+            // MENGUBAH GRID KOLOM SKELETON: Responsif dari 2 hingga 5 kolom
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {Array.from({ length: ITEMS_PER_LOAD }).map((_, i) => (
+                <Skeleton
                   key={i}
-                  className="card-luxury p-4 h-80 animate-pulse bg-muted"
+                  className="card-luxury p-4 h-64 animate-pulse bg-muted" // h-64 untuk tinggi kartu yang lebih kecil
                 />
               ))}
             </div>
-          ) : parfums.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {parfums.map((parfum) => (
-                <Link key={parfum.id} href={`/parfums/${parfum.slug}`}>
-                  <div className="group card-luxury overflow-hidden cursor-pointer h-full flex flex-col hover:shadow-xl transition-shadow p-4">
-                    <div className="relative w-full h-52 bg-muted overflow-hidden rounded-lg mb-4">
-                      {parfum.imageUrl ? (
-                        <Image
-                          src={parfum.imageUrl || "/placeholder.svg"}
-                          alt={parfum.name}
-                          fill
-                          className="object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                          <div className="text-center">
-                            <div className="text-3xl mb-1">💐</div>
-                            <p className="text-xs">No Image</p>
-                          </div>
-                        </div>
-                      )}
-                      <button className="absolute top-2 right-2 p-1.5 rounded-full bg-white/80 hover:bg-white transition opacity-0 group-hover:opacity-100">
-                        <Heart size={16} className="text-destructive" />
-                      </button>
-                    </div>
-
-                    <div className="flex-1 flex flex-col">
-                      <p className="text-xs font-medium text-primary uppercase tracking-wide">
-                        {parfum.brand.name}
-                      </p>
-                      <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition line-clamp-2 my-1">
-                        {parfum.name}
-                      </h3>
-                      <p className="text-xs text-muted-foreground line-clamp-1">
-                        {parfum.category.name}
-                      </p>
-                    </div>
-
-                    <div className="pt-3 border-t border-border mt-3 flex items-center justify-between">
-                      <div className="flex gap-0.5 items-center">
-                        <Star
-                          size={14}
-                          className="fill-primary text-primary"
-                        />
-                        <span className="text-xs text-muted-foreground ml-1">
-                          (Ulasan)
-                        </span>
-                      </div>
-                      <span className="text-xs font-medium text-muted-foreground">
-                        {parfum.launchYear}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
+          ) : showNoResults ? (
+            // Tampilan jika tidak ada hasil
             <div className="text-center py-16">
               <p className="text-lg text-muted-foreground mb-4">
                 Parfum tidak ditemukan
@@ -449,6 +446,91 @@ export default function ParfumsPage() {
                 Reset Semua Filter
               </button>
             </div>
+          ) : (
+            // Tampilan data parfum
+            <>
+              {/* MENGUBAH GRID KOLOM DAN GAP untuk density yang lebih tinggi dan responsif */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {parfums.map((parfum) => (
+                  <Link key={parfum.id} href={`/parfums/${parfum.slug}`}>
+                    <div className="group card-luxury overflow-hidden cursor-pointer h-full flex flex-col hover:shadow-xl transition-shadow p-4">
+                      {/* MENGURANGI TINGGI GAMBAR menjadi h-40 */}
+                      <div className="relative w-full h-40 bg-muted overflow-hidden rounded-lg mb-4">
+                        {parfum.imageUrl ? (
+                          <Image
+                            src={parfum.imageUrl || "/placeholder.svg"}
+                            alt={parfum.name}
+                            fill
+                            className="object-cover group-hover:scale-110 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                            <div className="text-center">
+                              <div className="text-3xl mb-1">💐</div>
+                              <p className="text-xs">No Image</p>
+                            </div>
+                          </div>
+                        )}
+                        <button className="absolute top-2 right-2 p-1.5 rounded-full bg-white/80 hover:bg-white transition opacity-0 group-hover:opacity-100">
+                          <Heart size={16} className="text-destructive" />
+                        </button>
+                      </div>
+
+                      <div className="flex-1 flex flex-col">
+                        <p className="text-xs font-medium text-primary uppercase tracking-wide">
+                          {parfum.brand.name}
+                        </p>
+                        <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition line-clamp-2 my-1">
+                          {parfum.name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground line-clamp-1">
+                          {parfum.category.name}
+                        </p>
+                      </div>
+
+                      <div className="pt-3 border-t border-border mt-3 flex items-center justify-between">
+                        <div className="flex gap-0.5 items-center">
+                          <Star
+                            size={14}
+                            className="fill-primary text-primary"
+                          />
+                          <span className="text-xs text-muted-foreground ml-1">
+                            (Ulasan)
+                          </span>
+                        </div>
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {parfum.launchYear}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              
+              {/* TOMBOL MUAT LEBIH BANYAK (LOAD MORE) */}
+              {hasMore && parfums.length > 0 && (
+                <div className="text-center mt-12">
+                  <Button
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    className="btn-luxury"
+                  >
+                    {loadingMore ? (
+                      <>
+                        <Loader2 size={20} className="mr-2 animate-spin" />
+                        Memuat Lebih Banyak...
+                      </>
+                    ) : (
+                      "Muat Lebih Banyak Referensi"
+                    )}
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {/* Tampilkan sisa data yang belum dimuat */}
+                    {totalParfums - parfums.length > 0 ? `${new Intl.NumberFormat('id-ID').format(totalParfums - parfums.length)} parfum tersisa` : 'Memuat...'}
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>

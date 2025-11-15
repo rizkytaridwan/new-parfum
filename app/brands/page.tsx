@@ -4,18 +4,21 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import Image from "next/image" // <-- Tambahkan import ini
+import Image from "next/image"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import type { Metadata } from "next"
 import { Building } from "lucide-react"
+
+// Import Skeleton untuk tampilan loading yang lebih baik
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface Brand {
   id: string
   name: string
   slug: string
   description: string
-  imageUrl?: string // <-- Tambahkan properti ini
+  imageUrl?: string
 }
 
 export default function BrandsPage() {
@@ -41,18 +44,40 @@ export default function BrandsPage() {
     <main className="min-h-screen bg-background">
       <Navigation />
 
-      {/* Header */}
-      {/* ... (bagian header tetap) ... */}
+      {/* --- START: HEADER BARU --- */}
+      <section className="py-12 md:py-16 bg-secondary/5 border-b border-border">
+        <div className="container-luxury">
+          {loading ? (
+            // Skeleton Loading untuk Header
+            <>
+              <Skeleton className="w-1/3 h-10 mb-4" />
+              <Skeleton className="w-2/3 h-6" />
+            </>
+          ) : (
+            <>
+              <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
+                Jelajahi Brand Parfum
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-2xl">
+                Temukan dan lihat semua koleksi dari brand-brand premium
+                yang terdaftar di Ensiklopedia Parfum.
+              </p>
+            </>
+          )}
+        </div>
+      </section>
+      {/* --- END: HEADER BARU --- */}
 
       {/* Grid Brand */}
       <section className="py-16 md:py-24">
         <div className="container-luxury">
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {/* Menggunakan Skeleton dari komponen yang tersedia */}
               {Array.from({ length: 8 }).map((_, i) => (
-                <div
+                <Skeleton
                   key={i}
-                  className="h-32 rounded-lg bg-muted animate-pulse"
+                  className="card-luxury p-6 h-40 animate-pulse bg-muted"
                 />
               ))}
             </div>
