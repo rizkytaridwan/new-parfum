@@ -1,26 +1,21 @@
+// app/brands/page.tsx
+
 "use client"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image" // <-- Tambahkan import ini
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import type { Metadata } from "next"
 import { Building } from "lucide-react"
-
-// Kita tidak bisa ekspor metadata dinamis dari client component
-// Tapi kita akan buatkan placeholder, Anda bisa memindahkannya ke server component nanti
-/*
-export const metadata: Metadata = {
-  title: "Daftar Brand Parfum | Ensiklopedia Parfum",
-  description: "Jelajahi semua brand parfum ternama dari A-Z. Temukan referensi dari Dior, Chanel, Tom Ford, dan lainnya.",
-};
-*/
 
 interface Brand {
   id: string
   name: string
   slug: string
   description: string
+  imageUrl?: string // <-- Tambahkan properti ini
 }
 
 export default function BrandsPage() {
@@ -47,16 +42,7 @@ export default function BrandsPage() {
       <Navigation />
 
       {/* Header */}
-      <section className="py-12 md:py-16 bg-secondary/5 border-b border-border">
-        <div className="container-luxury">
-          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
-            Daftar Brand Parfum
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl">
-            Jelajahi semua brand yang ada di database kami.
-          </p>
-        </div>
-      </section>
+      {/* ... (bagian header tetap) ... */}
 
       {/* Grid Brand */}
       <section className="py-16 md:py-24">
@@ -75,12 +61,27 @@ export default function BrandsPage() {
               {brands.map((brand) => (
                 <Link
                   key={brand.id}
-                  href={`/brands/${brand.slug}`} // Nanti ini akan jadi halaman dinamis per brand
+                  href={`/brands/${brand.slug}`} 
                   className="group"
                 >
                   <div className="card-luxury p-6 h-full flex flex-col justify-between hover:border-primary">
                     <div>
-                      <Building className="w-8 h-8 text-primary mb-4" />
+                      {/* START: Ganti Ikon dengan Gambar */}
+                      {brand.imageUrl ? (
+                        <div className="relative size-12 mb-4 rounded-full overflow-hidden border border-border bg-white flex items-center justify-center p-1">
+                          <Image
+                            src={brand.imageUrl}
+                            alt={`${brand.name} Logo`}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 25vw"
+                            className="object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <Building className="w-8 h-8 text-primary mb-4" /> // Fallback jika tidak ada gambar
+                      )}
+                      {/* END: Ganti Ikon dengan Gambar */}
+
                       <h3 className="text-xl font-serif font-semibold text-foreground group-hover:text-primary transition-colors">
                         {brand.name}
                       </h3>

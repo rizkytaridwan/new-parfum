@@ -53,10 +53,11 @@ export function FeaturedPerfumes() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          // Tambahkan grid-cols-1 untuk mobile
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {parfums.map((parfum) => (
               <Link key={parfum.id} href={`/parfums/${parfum.slug}`}>
-                <div className="group card-luxury overflow-hidden cursor-pointer h-full flex flex-col">
+                <div className="group card-luxury overflow-hidden cursor-pointer h-full flex flex-col p-4"> {/* Tambahkan p-4 di sini */}
                   {/* Image Container */}
                   <div className="relative w-full h-64 bg-muted overflow-hidden rounded-lg mb-4">
                     {parfum.imageUrl ? (
@@ -79,32 +80,23 @@ export function FeaturedPerfumes() {
                     </button>
                   </div>
 
-                  {/* Content */}
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="flex-1">
-                        <p className="text-sm text-muted-foreground">{parfum.brand.name}</p>
-                        <h3 className="text-lg font-semibold group-hover:text-primary transition">{parfum.name}</h3>
-                      </div>
-                    </div>
-
-                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                      {parfum.description || "Wangi eksklusif dengan aroma yang menawan"}
+                  {/* Content (DIOPTIMALKAN STRUKTUR KARTU) */}
+                  <div className="flex-1 flex flex-col">
+                    <p className="text-xs font-medium text-primary uppercase tracking-wide">
+                        {parfum.brand.name}
                     </p>
-
-                    {/* Rating */}
-                    <div className="flex items-center gap-1 mb-3">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star key={i} size={14} className="fill-primary text-primary" />
-                      ))}
-                      <span className="text-xs text-muted-foreground ml-2">(128 ulasan)</span>
-                    </div>
+                    <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition line-clamp-2 my-1">
+                        {parfum.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground line-clamp-1">
+                        {parfum.category.name}
+                    </p>
                   </div>
 
                   {/* Footer */}
-                  <div className="flex items-center justify-between pt-4 border-t border-border">
-                    <span className="text-sm text-muted-foreground">{parfum.launchYear}</span>
-                    <span className="text-sm font-semibold text-primary">{parfum.category.name}</span>
+                  <div className="flex items-center justify-between pt-3 border-t border-border mt-3">
+                    <span className="text-xs font-medium text-muted-foreground">{parfum.launchYear}</span>
+                    <span className="text-xs font-semibold text-primary">{parfum.category.name}</span>
                   </div>
                 </div>
               </Link>

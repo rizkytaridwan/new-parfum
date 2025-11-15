@@ -1,7 +1,10 @@
+// components/brand-showcase.tsx
+
 "use client"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image" // <-- Tambahkan import ini
 import { Building } from "lucide-react"
 
 interface Brand {
@@ -9,6 +12,7 @@ interface Brand {
   name: string
   slug: string
   description: string
+  imageUrl?: string // <-- Tambahkan properti ini
 }
 
 export function BrandShowcase() {
@@ -53,7 +57,22 @@ export function BrandShowcase() {
 
               {/* Content */}
               <div className="relative h-full flex flex-col items-center justify-center text-center p-6">
-                <Building className="w-8 h-8 text-primary mb-3" />
+                {/* START: Ganti Ikon dengan Gambar */}
+                {brand.imageUrl ? (
+                  <div className="relative size-12 mb-3 rounded-full overflow-hidden border border-primary bg-white/70 flex items-center justify-center p-1">
+                    <Image
+                      src={brand.imageUrl}
+                      alt={`${brand.name} Logo`}
+                      fill
+                      sizes="128px"
+                      className="object-contain"
+                    />
+                  </div>
+                ) : (
+                  <Building className="w-8 h-8 text-primary mb-3" /> // Fallback jika tidak ada gambar
+                )}
+                {/* END: Ganti Ikon dengan Gambar */}
+                
                 <h3 className="text-xl font-serif font-semibold mb-2 group-hover:text-primary transition">
                   {brand.name}
                 </h3>
@@ -68,7 +87,6 @@ export function BrandShowcase() {
           ))}
         </div>
         
-        {/* Tombol Lihat Semua Brand */}
         <div className="text-center mt-12">
             <Link href="/brands" className="btn-luxury">
                 Lihat Semua Brand

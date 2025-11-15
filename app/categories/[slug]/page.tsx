@@ -128,7 +128,7 @@ export default function CategoryDetailPage() {
               </Link>
             </div>
           ) : parfums.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {parfums.map((parfum) => (
                 <Link key={parfum.id} href={`/parfums/${parfum.slug}`}>
                   <div className="group card-luxury overflow-hidden cursor-pointer h-full flex flex-col hover:shadow-xl transition-shadow p-4">

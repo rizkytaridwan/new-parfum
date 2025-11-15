@@ -176,17 +176,21 @@ export default function ParfumsPage() {
             Koleksi Lengkap Parfum
           </h1>
           <p className="text-muted-foreground max-w-2xl">
-            Jelajahi pilihan wangi premium dari brand internasional terkemuka.
+            Jelajahi pilihan wangi premium dari brand nasional terkemuka.
           </p>
         </div>
       </section>
 
-      {/* Filters & Search */}
+      {/* Filters & Search (DIOPTIMALKAN UNTUK MOBILE) */}
       <section className="py-8 border-b border-border sticky top-16 bg-card z-40">
         <div className="container-luxury">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Search */}
-            <div className="relative md:col-span-1">
+          {/* PERBAIKAN: Gunakan grid-cols-2 untuk mobile, dan 4 untuk md ke atas. 
+                      Atur agar Search mengambil 2 kolom di mobile/kecil. */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4"> 
+            
+            {/* Search Input */}
+            {/* PERBAIKAN: Gunakan col-span-2 di bawah md, 1 di md. */}
+            <div className="relative col-span-2 md:col-span-1">
               <Search
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
                 size={18}
@@ -194,7 +198,6 @@ export default function ParfumsPage() {
               <input
                 type="text"
                 placeholder="Cari parfum..."
-                // (MODIFIKASI) Gunakan defaultValue untuk sinkronisasi awal
                 defaultValue={searchTerm} 
                 onChange={handleSearchChange}
                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
@@ -202,24 +205,30 @@ export default function ParfumsPage() {
             </div>
 
             {/* Brand Combobox */}
+            {/* PERBAIKAN: Mengatur lebar agar tidak melebar berlebihan dan tumpang tindih */}
             <Popover open={brandPopoverOpen} onOpenChange={setBrandPopoverOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
                   aria-expanded={brandPopoverOpen}
-                  className="w-full justify-between bg-input hover:bg-muted"
+                  className="w-full justify-between bg-input hover:bg-muted col-span-1" 
                 >
                   <span className="truncate">{selectedBrandName}</span>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+              {/* PERBAIKAN UTAMA DI SINI: Naikkan z-index menjadi z-[51] atau lebih tinggi dari container sticky filter (z-40). 
+                   Juga pastikan PopoverContent tidak terlalu lebar di mobile. 
+                   Kita akan set lebar statis di desktop, dan 100% lebar kolom di mobile. */}
+              <PopoverContent className="w-[100%] md:w-[var(--radix-popover-trigger-width)] p-0 z-[51]">
                 <Command>
+                  {/* ... (Konten Command tetap sama) ... */}
                   <CommandInput placeholder="Cari brand..." />
                   <CommandList>
                     <CommandEmpty>Brand tidak ditemukan.</CommandEmpty>
                     <CommandGroup>
+                      {/* ... (CommandItem Brand tetap sama) ... */}
                       <CommandItem
                         onSelect={() => {
                           handleFilterChange("brandSlug", "")
@@ -272,18 +281,21 @@ export default function ParfumsPage() {
                   variant="outline"
                   role="combobox"
                   aria-expanded={categoryPopoverOpen}
-                  className="w-full justify-between bg-input hover:bg-muted"
+                  className="w-full justify-between bg-input hover:bg-muted col-span-1"
                 >
                   <span className="truncate">{selectedCategoryName}</span>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+              {/* PERBAIKAN UTAMA DI SINI: Naikkan z-index menjadi z-[51] */}
+              <PopoverContent className="w-[100%] md:w-[var(--radix-popover-trigger-width)] p-0 z-[51]">
                 <Command>
+                  {/* ... (Konten Command tetap sama) ... */}
                   <CommandInput placeholder="Cari kategori..." />
                   <CommandList>
                     <CommandEmpty>Kategori tidak ditemukan.</CommandEmpty>
                     <CommandGroup>
+                      {/* ... (CommandItem Category tetap sama) ... */}
                       <CommandItem
                         onSelect={() => {
                           handleFilterChange("categorySlug", "")
@@ -328,9 +340,9 @@ export default function ParfumsPage() {
 
             {/* Audience Filter */}
             <select
-              value={selectedAudience} // (MODIFIKASI) Tetap value
+              value={selectedAudience} 
               onChange={(e) => handleFilterChange("audience", e.target.value)}
-              className="px-4 py-2 rounded-lg border border-border bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="px-4 py-2 rounded-lg border border-border bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary col-span-2 md:col-span-1"
             >
               <option value="">Semua Audience</option>
               <option value="Pria">Pria</option>
@@ -360,11 +372,11 @@ export default function ParfumsPage() {
         </div>
       </section>
 
-      {/* Parfums Grid (Tidak ada perubahan di sini) */}
+      {/* Parfums Grid (DIOPTIMALKAN STRUKTUR KARTU) */}
       <section className="py-12 md:py-16">
         <div className="container-luxury">
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
@@ -373,7 +385,7 @@ export default function ParfumsPage() {
               ))}
             </div>
           ) : parfums.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {parfums.map((parfum) => (
                 <Link key={parfum.id} href={`/parfums/${parfum.slug}`}>
                   <div className="group card-luxury overflow-hidden cursor-pointer h-full flex flex-col hover:shadow-xl transition-shadow p-4">

@@ -237,7 +237,7 @@ export default function ParfumDetailPage() {
               </div>
 
               <div className="grid grid-cols-3 gap-4 mb-8">
-                <div className="flex items-start gap-3 bg-muted p-4 rounded-lg">
+                {/* <div className="flex items-start gap-3 bg-muted p-4 rounded-lg">
                   <Clock size={20} className="text-primary mt-1 shrink-0" />
                   <div>
                     <p className="text-sm text-muted-foreground">Tahun Rilis</p>
@@ -245,7 +245,7 @@ export default function ParfumDetailPage() {
                       {parfum.launchYear}
                     </p>
                   </div>
-                </div>
+                </div> */}
                 <div className="flex items-start gap-3 bg-muted p-4 rounded-lg">
                   <BookOpen size={20} className="text-primary mt-1 shrink-0" />
                   <div>
