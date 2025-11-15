@@ -4,8 +4,8 @@
 export const DB_CONFIG = {
   host: "localhost",
   user: "root",
-  password: "", // XAMPP default kosong
-  database: "newparfum",
+  password: "", 
+  database: "newdbparfumrzky",
   port: 3306,
   waitForConnections: true,
   connectionLimit: 10,

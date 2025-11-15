@@ -351,12 +351,12 @@ export default function ParfumDetailPage() {
               </div>
 
               {/* Slot Iklan AdSense */}
-              <div className="mt-8 p-4 border border-dashed border-border rounded-lg text-center bg-muted h-64 flex items-center justify-center">
+              {/* <div className="mt-8 p-4 border border-dashed border-border rounded-lg text-center bg-muted h-64 flex items-center justify-center">
                 <p className="text-sm font-medium text-muted-foreground">
                   Slot Iklan AdSense (300x250 atau Responsif) <br />
                   Tempatkan kode AdSense Anda di sini.
                 </p>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

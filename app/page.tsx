@@ -5,6 +5,9 @@ import { CategoryShowcase } from "@/components/category-showcase"
 import { Footer } from "@/components/footer"
 import type { Metadata } from "next"
 
+// Import komponen baru
+import { BrandShowcase } from "@/components/brand-showcase" //
+
 // MODIFIKASI METADATA HOMEPAGE
 export const metadata: Metadata = {
   title: "Ensiklopedia Parfum - Referensi & Ulasan Wangi Terlengkap",
@@ -24,6 +27,8 @@ export default function Home() {
       <Hero />
       <FeaturedPerfumes />
       <CategoryShowcase />
+      {/* Tambahkan BrandShowcase di sini */}
+      <BrandShowcase /> 
       <Footer />
     </main>
   )
